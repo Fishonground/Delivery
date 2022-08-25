@@ -18,8 +18,9 @@ if __name__ == '__main__':
     config_parser = ConfigParser()
     config_parser.read_file(args.config_file)
     config = dict(config_parser['default'])
-    config.update(config_parser['positioning'])
+    config.update(config_parser['central'])
 
     requests_queue = Queue()
-    start_consumer(args, config)
+    start_consumer(args, config, requests_queue)
+    #start_consumer(args, config)    
     start_producer(args, config, requests_queue)    

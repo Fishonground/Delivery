@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
 
-COPY file_server /file_server
+COPY fleet /fleet
 
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
@@ -17,8 +17,8 @@ COPY file_server /file_server
 #RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /file_server && chown -R appuser /file_server/data
 #USER appuser
 
-WORKDIR /file_server
+WORKDIR /fleet
 ENV FLASK_DEBUG=1
 CMD ["python", "server.py"]
 
-EXPOSE 6001/tcp
+EXPOSE 6004/tcp

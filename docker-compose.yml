@@ -45,6 +45,16 @@ services:
       - ./file_server/data/:/file_server/data
     ports:
       - "6001:6001"
+    
+  fleet:
+    image: fleet
+    build:
+      context: .
+      dockerfile: ./Dockerfile.fleet   
+    volumes:
+      - ./fleet/data/:/fleet/data
+    ports:
+      - "6004:6004"
 
   monitor:
     image: monitor
@@ -101,5 +111,49 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.positioning
+    depends_on:
+      - broker
+
+  central:
+    image: central
+    build:
+      context: .
+      dockerfile: ./Dockerfile.central
+    depends_on:
+      - broker
+
+  communication:
+    image: communication
+    build:
+      context: .
+      dockerfile: ./Dockerfile.communication
+    depends_on:
+      - broker
+    ports:
+      - "6008:6008"
+
+  hmi:
+    image: hmi
+    build:
+      context: .
+      dockerfile: ./Dockerfile.hmi
+    depends_on:
+      - broker
+    ports:
+      - "6006:6006"
+
+  motion:
+    image: motion
+    build:
+      context: .
+      dockerfile: ./Dockerfile.motion
+    depends_on:
+      - broker
+
+  sensors:
+    image: sensors
+    build:
+      context: .
+      dockerfile: ./Dockerfile.sensors
     depends_on:
       - broker

@@ -21,14 +21,13 @@ def producer_job(_, config, requests_queue: multiprocessing.Queue):
     def delivery_callback(err, msg):
         if err:
             print('[error] Message failed delivery: {}'.format(err))
-        # else:
-        #     print("[debug]Produced event to topic {topic}: key = {key:12} value = {value:12}".format(
-        #         topic=msg.topic(), key=msg.key().decode('utf-8'), value=msg.value().decode('utf-8')))
 
 
     topic = 'monitor'
     while True:
         event_details = requests_queue.get() 
+        event_details['source'] = 'positioning'
+        print ("Start messaging!")
         print (event_details)               
         producer.produce(topic, json.dumps(event_details), event_details['id'],  
             callback=delivery_callback

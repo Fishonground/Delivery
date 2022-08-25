@@ -1,4 +1,7 @@
+ordering = False
+
 def check_operation(id, details):
+    global ordering
     authorized = False
     # print(f"[debug] checking policies for event {id}, details: {details}")
     print(f"[info] checking policies for event {id},"\
@@ -6,41 +9,52 @@ def check_operation(id, details):
     src = details['source']
     dst = details['deliver_to']
     operation = details['operation']
-    if  src == 'downloader' and dst == 'manager' \
-        and operation == 'download_done':
+    if not ordering:
+        if  src == 'communication' and dst == 'central' \
+            and operation == 'ordering' and type(details['pincode']) == int \
+                and type(details['x']) == int and type(details['y']) == int \
+                and abs(details['x']) <= 200 and abs(details['y']) <= 200  and len(details) == 7 :
+            authorized = True
+            ordering = True
+
+
+    if src == 'central' and dst == 'communication' \
+        and operation == 'confirmation':
         authorized = True    
-    if src == 'manager' and dst == 'downloader' \
-        and operation == 'download_file':
+    if src == 'central' and dst == 'positioning' \
+        and operation == 'count_direction':
         authorized = True    
-    if src == 'manager' and dst == 'storage' \
-        and operation == 'commit_blob':
+    if src == 'positioning' and dst == 'central' \
+        and operation == 'count_direction':
         authorized = True    
-    if src == 'manager' and dst == 'verifier' \
-        and operation == 'verification_requested':
+    if src == 'central' and dst == 'motion' \
+        and operation == 'motion_start':
         authorized = True    
-    if src == 'verifier' and dst == 'manager' \
-        and operation == 'handle_verification_result':
+    if src == 'motion' and dst == 'positioning' \
+        and operation == 'motion_start':
+        #and details['verified'] is True:
         authorized = True    
-    if src == 'manager' and dst == 'updater' \
-        and operation == 'proceed_with_update' \
-        and details['verified'] is True:
+    if src == 'motion' and dst == 'positioning' \
+        and operation == 'stop':
         authorized = True    
-    if src == 'storage' and dst == 'manager' \
-        and operation == 'blob_committed':
-        authorized = True    
-    if src == 'verifier' and dst == 'storage' \
-        and operation == 'get_blob':
+    if src == 'positioning' and dst == 'central' \
+        and operation == 'stop':
         authorized = True
-    if src == 'storage' and dst == 'verifier' \
-        and operation == 'blob_content':
+    if src == 'hmi' and dst == 'central' \
+        and operation == 'pincoding':
         authorized = True    
-    if src == 'updater' and dst == 'storage' \
-        and operation == 'get_blob':
+    if src == 'central' and dst == 'sensors' \
+        and operation == 'lock_opening':
         authorized = True
-    if src == 'storage' and dst == 'updater' \
-        and operation == 'blob_content':
+#     if src == 'sensors' and dst == 'central' \
+#         and operation == 'lock_opening':
+#         authorized = True
+    if  src == 'sensors' and dst == 'central'\
+        and operation == 'lock_closing':
         authorized = True
-    if  src == 'positioning':
-        authorized = True    
-    
+    if  src == 'central' and dst == 'communication'\
+        and operation == 'ready':
+        authorized = True
+        ordering = False
+
     return authorized

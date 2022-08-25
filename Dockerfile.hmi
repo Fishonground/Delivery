@@ -1,0 +1,19 @@
+FROM python:3.8-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
+
+COPY hmi /hmi
+COPY config.ini /hmi/
+
+RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /hmi
+USER appuser
+
+WORKDIR /hmi
+CMD ["python", "hmi.py", "config.ini"]
+
+EXPOSE 6006

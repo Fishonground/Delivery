@@ -23,3 +23,24 @@ GET http://localhost:6001/get-digest/app-update.zip HTTP/1.1
 ### get archived update file
 GET http://localhost:6001/download-update/app-update.zip HTTP/1.1
 
+
+### create new order
+POST http://0.0.0.0:6008/ordering HTTP/1.1
+content-type: application/json
+auth: very-secure-token
+
+{
+    "pincode": 12345,
+    "x": 128,
+    "y": 128
+} 
+
+### create new pin
+POST http://localhost:6006/pincoding HTTP/1.1
+content-type: application/json
+auth: very-secure-token
+
+{"pincode": 12345} 
+
+###
+POST http://localhost:6004/ending HTTP/1.1
