@@ -3,6 +3,7 @@
 POST http://0.0.0.0:6008/ordering HTTP/1.1
 
 content-type: application/json
+
 auth: very-secure-token
 
 {
@@ -16,6 +17,7 @@ auth: very-secure-token
 POST http://localhost:6006/pincoding HTTP/1.1
 
 content-type: application/json
+
 auth: very-secure-token
 
 {
