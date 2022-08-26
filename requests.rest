@@ -1,6 +1,7 @@
 ### create new order
 
-POST http://0.0.0.0:6008/ordering HTTP/1.1
+POST http://0.0.0.0:6008/ordering HTTP/1.
+
 content-type: application/json
 auth: very-secure-token
 
@@ -13,8 +14,10 @@ auth: very-secure-token
 ### send the pincode
 
 POST http://localhost:6006/pincoding HTTP/1.1
+
 content-type: application/json
 auth: very-secure-token
+
 {
     "pincode": 12345
 } 
