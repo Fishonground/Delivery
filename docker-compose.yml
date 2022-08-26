@@ -25,26 +25,6 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-
-  app_with_updater:
-    image: app_with_updater
-    build:
-      context: .
-      dockerfile: ./Dockerfile.app_with_updater
-    depends_on:
-      - broker
-    ports:
-      - "5000:5000"
-
-  file_server:
-    image: file_server
-    build:
-      context: .
-      dockerfile: ./Dockerfile.file_server    
-    volumes:
-      - ./file_server/data/:/file_server/data
-    ports:
-      - "6001:6001"
     
   fleet:
     image: fleet
@@ -64,47 +44,6 @@ services:
     depends_on:
       - broker
 
-  downloader:
-    image: downloader
-    build:
-      context: .
-      dockerfile: ./Dockerfile.downloader    
-    depends_on:
-      - file_server
-      - broker
-
-  storage:
-    image: storage
-    build:
-      context: .
-      dockerfile: ./Dockerfile.storage
-    depends_on:
-      - broker
-
-  verifier:
-    image: verifier
-    build:
-      context: .
-      dockerfile: ./Dockerfile.verifier
-    depends_on:
-      - broker
-      - storage
-
-  manager:
-    image: manager
-    build:
-      context: .
-      dockerfile: ./Dockerfile.manager
-    depends_on:
-      - broker      
-      - monitor
-      - downloader
-      - verifier
-      - storage
-      - app_with_updater
-      - positioning
-    ports:
-      - "6000:6000"
 
   positioning:
     image: positioning
