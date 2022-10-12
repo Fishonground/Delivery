@@ -11,13 +11,14 @@ from producer import proceed_to_deliver
 def handle_event(id, details):    
     # print(f"[debug] handling event {id}, {details}")
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
-    if check_operation(id, details):
-        proceed_to_deliver(id, details)
-    else:
-        print("[error] !!!! policies check failed, delivery unauthorized !!! " \
-            f"id: {id}, {details['source']}->{details['deliver_to']}:{details['operation']}"
-            )
-        print(f"[error] suspicious event details: {details}")
+    if not ((details['source']=='monitor' or details['source']=='central') and details['deliver_to']=='monitor'):
+        if check_operation(id, details):
+            proceed_to_deliver(id, details)
+        else:
+            print("[error] !!!! policies check failed, delivery unauthorized !!! " \
+                f"id: {id}, {details['source']}->{details['deliver_to']}:{details['operation']}"
+                )
+            print(f"[error] suspicious event details: {details}")
 
 
 def consumer_job(args, config):

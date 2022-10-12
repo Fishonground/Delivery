@@ -17,12 +17,6 @@ _requests_queue: multiprocessing.Queue = None
 def pincoding():
     content = request.json
 
-    print(content)
-    #content = json.load(content)
-    #auth = request.headers['auth']
-    # if auth != 'very-secure-token':
-    #     return "unauthorized", 401
-
     req_id = uuid4().__str__()
 
     try:
@@ -32,8 +26,7 @@ def pincoding():
             "deliver_to": "central",
             "source":"hmi",
             "pincode": content['pincode'],
-            "authorized": False,
-            #"pincode": sha256(content['pincode']).hexdigest(),
+            "authorized": False
             }
         _requests_queue.put(hmi_details)
         print(f"pincoding event: {hmi_details}")

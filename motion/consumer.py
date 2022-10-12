@@ -19,20 +19,14 @@ direction = 0
 def move_move(id, details, journey_time):
     while True:
         time.sleep(journey_time-0.1)
-        print(f"[motion] robot seems went all way")
+        print(f"[motion] robot went an iteration")
         now = time.time()
-        details = {
-                    "id": id,
-                    "source": "",
-                    "operation": "stop",
-                    "deliver_to": "positioning",
-                    "direction": details['direction'],
-                    "speed": 0,
-                    "distance": speed * (now - timestamp),
-                    "time": now - timestamp,
-                    "x": 0,
-                    "y": 0
-                    }
+        details['operation'] = "stop"
+        details['deliver_to'] = "position"
+        details['direction'] = details['direction']
+        details['speed'] = 0
+        details['distance'] = speed * (now - timestamp)
+        details['time'] = now - timestamp
         print(f"[motion] event {id}, stopped in {now}, went {details['distance']}")
         proceed_to_deliver(id, details)
         break
@@ -56,30 +50,15 @@ def handle_event(id, details_str):
             speed = details['speed']
             direction = details['direction']
             print(f"[motion] event {id}, will take {journey_time} from {timestamp}")
-            details = {
-            "id": id,
-            "source": "",
-            "operation": "motion_start",
-            "deliver_to": "positioning",
-            "direction": details['direction'],
-            "speed": details['speed'],
-            "distance": 0,
-            "time": timestamp + journey_time
-            }
+
+            details['operation'] = "motion_start"
+            details['deliver_to'] = "position"
+            details['time'] = timestamp + journey_time
+
             threading.Thread(target=lambda: move_move(id, details, journey_time)).start()
             delivery_required = True
         elif details['operation'] == 'stop':
             print("How did we get here?")
-            # global stopped
-            # stopped = True
-            # details['deliver_to'] = 'positioning'
-            # details['operation'] = 'stop'
-            # details['speed'] = 0
-            # now = time.time()
-            # details['distance'] = speed * (now - timestamp)
-            # details['time'] = now - timestamp
-            # details['direction'] = direction
-            # print(f"[motion] event {id}, stopped in {now}, went {details['distance']}")
             delivery_required = True
         else:
             print(f"[warning] unknown operation!\n{details}")                

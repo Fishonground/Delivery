@@ -8,7 +8,7 @@ from producer import proceed_to_deliver
 
 def handle_event(id: str, details: dict):
     delivery_required = False
-    # print(f"[debug] handling event {id}, {details}")
+    #rudiment for pincoding attemt answer by central
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
     if details['operation'] == 'pincoding':
         pass

@@ -15,13 +15,14 @@ services:
     # To learn about configuring Kafka for access across networks see
     # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
       - "9092:9092"
+      - "9094:9094"
     depends_on:
       - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092, OUTSIDE://localhost:9094
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -45,11 +46,11 @@ services:
       - broker
 
 
-  positioning:
-    image: positioning
+  position:
+    image: position
     build:
       context: .
-      dockerfile: ./Dockerfile.positioning
+      dockerfile: ./Dockerfile.position
     depends_on:
       - broker
 
@@ -70,6 +71,7 @@ services:
       - broker
     ports:
       - "6008:6008"
+    
 
   hmi:
     image: hmi
@@ -96,3 +98,19 @@ services:
       dockerfile: ./Dockerfile.sensors
     depends_on:
       - broker
+
+  gps:
+      image: gps
+      build:
+        context: .
+        dockerfile: ./Dockerfile.gps
+      depends_on:
+        - broker
+
+  camera:
+      image: camera
+      build:
+        context: .
+        dockerfile: ./Dockerfile.camera
+      depends_on:
+        - broker

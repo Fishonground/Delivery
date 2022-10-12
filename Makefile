@@ -1,7 +1,7 @@
 PATH_PREFIX=~
 
 create-topics:
-  	docker exec broker \
+		docker exec broker \
   kafka-topics --create --if-not-exists \
     --topic monitor \
     --bootstrap-server localhost:9092 \
@@ -33,13 +33,25 @@ create-topics:
     --partitions 1
 	docker exec broker \
   kafka-topics --create --if-not-exists \
-    --topic positioning \
+    --topic position \
     --bootstrap-server localhost:9092 \
     --replication-factor 1 \
     --partitions 1
 	docker exec broker \
   kafka-topics --create --if-not-exists \
     --topic sensors \
+    --bootstrap-server localhost:9092 \
+    --replication-factor 1 \
+    --partitions 1
+	docker exec broker \
+  kafka-topics --create --if-not-exists \
+    --topic gps \
+    --bootstrap-server localhost:9092 \
+    --replication-factor 1 \
+    --partitions 1
+	docker exec broker \
+  kafka-topics --create --if-not-exists \
+    --topic camera \
     --bootstrap-server localhost:9092 \
     --replication-factor 1 \
     --partitions 1
@@ -61,8 +73,10 @@ permissions:
 	chmod u+x $(PATH_PREFIX)/delivery-robot/fleet/server.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/hmi/hmi.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/motion/motion.py
-	chmod u+x $(PATH_PREFIX)/delivery-robot/positioning/positioning.py
+	chmod u+x $(PATH_PREFIX)/delivery-robot/position/position.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/sensors/sensors.py
+	chmod u+x $(PATH_PREFIX)/delivery-robot/camera/camera.py
+	chmod u+x $(PATH_PREFIX)/delivery-robot/gps/gps.py
 
 pipenv:
 	pipenv install -r requirements.txt
@@ -74,7 +88,7 @@ prepare-screen:
 	sudo /etc/init.d/screen-cleanup start
 
 
-run-screen: broker run-central-screen run-communication-screen run-fleet-screen run-hmi-screen run-motion-screen run-sensors-screen run-positioning-screen
+run-screen: broker run-central-screen run-communication-screen run-fleet-screen run-hmi-screen run-motion-screen run-sensors-screen run-position-screen run-gps-screen run-camera-screen
 
 build:
 	docker-compose build
@@ -101,11 +115,11 @@ run-monitor:
 	cd $(PATH_PREFIX)/delivery-robot/; pipenv run ./monitor/monitor.py config.ini
 
 
-run-positioning:
-	cd $(PATH_PREFIX)/delivery-robot/; pipenv run positioning/positioning.py config.ini
+run-position:
+	cd $(PATH_PREFIX)/delivery-robot/; pipenv run position/position.py config.ini
 
-run-positioning-screen:
-	screen -dmS positioning bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run positioning/positioning.py config.ini"
+run-position-screen:
+	screen -dmS position bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run position/position.py config.ini"
 
 run-central:
 	cd $(PATH_PREFIX)/delivery-robot/; pipenv run central/central.py config.ini
@@ -142,6 +156,18 @@ run-sensors:
 
 run-sensors-screen:
 	screen -dmS sensors bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run sensors/sensors.py config.ini"
+
+run-gps:
+	cd $(PATH_PREFIX)/delivery-robot/; pipenv run gps/gps.py config.ini
+
+run-gps-screen:
+	screen -dmS gps bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run gps/gps.py config.ini"
+
+run-camera:
+	cd $(PATH_PREFIX)/delivery-robot/; pipenv run camera/camera.py config.ini
+
+run-camera-screen:
+	screen -dmS camera bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run camera/camera.py config.ini"
 
 test:
 	pytest -sv

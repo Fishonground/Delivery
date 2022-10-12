@@ -7,10 +7,9 @@ from random import randrange
 import threading
 import time
 from confluent_kafka import Consumer, OFFSET_BEGINNING
-from flask import request
 import json
 from producer import proceed_to_deliver
-
+import requests
 
 _requests_queue: multiprocessing.Queue = None
             
@@ -21,19 +20,26 @@ def handle_event(id, details_str):
     try:
         delivery_required = False
         if details['operation'] == 'confirmation':
-            if details['confirmation']:
-                response = request.post('https://localhost:6004/confirmation', json={'status':'successfull'})
-                print(f"[communication] event {id}, server answered {response}")
-                # if response.status_code != 200:
-                #     print(f"[error] event {id}, can't connect with fleet")
-                # print(f"[communication] event {id}, delivering confirmed by Central")
-            else: print(f"[communication] event {id}, robot wasn't start his way!!!!!!")
-        elif details['operation'] == 'ready':
-            response = request.post('https://localhost:6004/ending', json={'status':'successfull'})
+            data = {
+                "status": details['confirmation']
+            }
+            response = requests.post(
+                    "http://fleet:6004/confirmation",
+                    data=json.dumps(data),
+                    headers={"Content-Type": "application/json", "auth": "very-secure-token"},
+            )
+            print(f"[communication] event {id}, server answered {response}")    
+
+        elif details['operation'] == 'operation_status':
+            data = {
+                "status": details['status']
+            }
+            response = requests.post(
+                    "http://fleet:6004/status",
+                    data=json.dumps(data),
+                    headers={"Content-Type": "application/json", "auth": "very-secure-token"},
+            )
             print(f"[communication] event {id}, server answered {response}")
-            #if response.status_code != 200:
-            #        print(f"[error] event {id}, can't connect with fleet")
-            #print(f"[communication] event {id}, robot has been planted")
             
         else:
             print(f"[warning] unknown operation!\n{details}")                

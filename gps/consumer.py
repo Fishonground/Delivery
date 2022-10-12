@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import multiprocessing
+import random
 import threading
 import time
 from confluent_kafka import Consumer, OFFSET_BEGINNING
@@ -11,18 +12,8 @@ import base64
 
 
 _requests_queue: multiprocessing.Queue = None
-
-def close_lock(id, details, was):
-    while True:
-        now = time.time()
-        if (now-was) >= 5:
-            print(f"[lock_closing] event {id}, {now}")
-            details['deliver_to'] = 'central'
-            details['operation'] = 'lock_closing'
-            proceed_to_deliver(id, details)
-            break
-        else:
-            time.sleep(1)
+x = 0
+y = 0
 
 
 def handle_event(id, details_str):
@@ -30,13 +21,21 @@ def handle_event(id, details_str):
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
     try:
         delivery_required = False
-        if details['operation'] == 'lock_opening':
-            details['deliver_to'] = 'central'
-            details['operation'] = 'lock_opening'
-            delivery_required = True
-            was = time.time();
-            print(f"[lock_opening] event {id}, {was}")
-            threading.Thread(target=lambda: close_lock(id, details, was)).start()
+        global x
+        global y
+        if details['operation'] == 'where_am_i':
+            if random.randrange(1, 30) <= 20:
+                details['deliver_to'] = 'central'
+                details['operation'] = 'gps'
+                details['x'] = x
+                details['y'] = y
+                delivery_required = True
+            else:
+                details['deliver_to'] = 'central'
+                details['operation'] = 'gps_error'
+        if details['operation'] == 'nonexistent':
+            x = details['x']
+            y = details['y']
         else:
             print(f"[warning] unknown operation!\n{details}")                
         if delivery_required:
@@ -48,23 +47,23 @@ def handle_event(id, details_str):
 
 def consumer_job(args, config):
     # Create Consumer instance
-    sensors_consumer = Consumer(config)
+    gps_consumer = Consumer(config)
 
     # Set up a callback to handle the '--reset' flag.
-    def reset_offset(sensors_consumer, partitions):
+    def reset_offset(gps_consumer, partitions):
         if args.reset:
             for p in partitions:
                 p.offset = OFFSET_BEGINNING
-            sensors_consumer.assign(partitions)
+            gps_consumer.assign(partitions)
 
     # Subscribe to topic
-    topic = "sensors"
-    sensors_consumer.subscribe([topic], on_assign=reset_offset)
+    topic = "gps"
+    gps_consumer.subscribe([topic], on_assign=reset_offset)
 
     # Poll for new messages from Kafka and print them.
     try:
         while True:
-            msg = sensors_consumer.poll(1.0)
+            msg = gps_consumer.poll(1.0)
             if msg is None:
                 pass
             elif msg.error():
@@ -80,7 +79,7 @@ def consumer_job(args, config):
     except KeyboardInterrupt:
         pass
     finally:
-        sensors_consumer.close()
+        gps_consumer.close()
 
 
 def start_consumer(args, config):

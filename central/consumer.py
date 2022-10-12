@@ -1,6 +1,7 @@
 # implements Kafka topic consumer functionality
 
 from datetime import datetime
+import hashlib
 import multiprocessing
 import threading
 import time
@@ -12,33 +13,44 @@ import base64
 
 _requests_queue: multiprocessing.Queue = None
 PIN = 0
-target_x = 0
-target_y = 0
+x1 = 0
+y1 = 0
 pincode_comp = False
 attempts = 3
 destination_point = False
-#details['operation'] == 'confirm'
-#details['operation'] == 'ending'
+old_id = ''
+operation_status = False
 
-
+def check_password(hashed_password, user_password):
+    password, salt = hashed_password.split(':')
+    user_password = str(user_password)
+    return password == hashlib.sha256(salt.encode() + user_password.encode()).hexdigest()
 
 def handle_event(id, details_str):
     details = json.loads(details_str)
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
     global PIN
-    global target_x
-    global target_y
+    global x1
+    global y1
     global pincode_comp
     global attempts
     global destination_point
+    global old_id
+    global operation_status
+    
     try:
         delivery_required = False
         if details['operation'] == 'ordering':
+            pincode_comp = False
+            destination_point = False
+            operation_status = False
             attempts = 3
             PIN = details['pincode']
-            target_x = details['x']
-            target_y = details['y']
-            print(f"[central] event {id}, order to {details['x']} : {details['y']} in working")
+            old_id = details['id']
+            details['pincode'] = ''
+            x1 = details['x1']
+            y1 = details['y1']
+            print(f"[central] event {id}, order to {details['x1']} : {details['y1']} in working...")
 
             global _requests_queue 
             confirmation_details = {
@@ -50,114 +62,102 @@ def handle_event(id, details_str):
             }
             _requests_queue.put(confirmation_details)
 
-            details = {
-            "id": id,
-            "source": "",
-            "operation": "count_direction",
-            "deliver_to": "positioning",
-            "direction": 0,
-            "speed": 0,
-            "distance": 0,
-            "time": 0,
-            "x": details['x'],
-            "y": details['y']
-            }
-            print(f"[central] event {id}, order is counting")
+            details['deliver_to'] = 'position'
+            details['operation'] = 'count_direction'
+            print(f"[central] event {id}, order is counting...")
             delivery_required = True
 
 
         elif details['operation'] == 'count_direction':
-            print(f"[central] event {id}, order is counted")
-            details = {
-            "id": id,
-            "source": "",
-            "operation": "motion_start",
-            "deliver_to": "motion",
-            "direction": details['direction'],
-            "speed": details['speed'],
-            "distance": details['distance'],
-            "time": 0,
-            "x": 0,
-            "y": 0
-            }
-            print(f"[central] event {id}, robot started it's way")
+            details['deliver_to'] = 'motion'
+            details['operation'] = 'motion_start'
+            print(f"[central] event {id}, motion start command is sending...")
             delivery_required = True
 
         elif details['operation'] == 'pincoding':
             if destination_point:
-                print(f"[central] event {id}, checking PIN")
-                global pincode_comp
+                print(f"[central] event {old_id}, checking PIN...")
+                #global pincode_comp
                 if attempts > 0:
                     attempts-=1
-                    if PIN == details['pincode']: 
+                    if check_password(PIN, str(details['pincode'])):
                         pincode_comp = True
+                        details['id'] = old_id
                         details['deliver_to'] = 'sensors'
                         details['operation'] = 'lock_opening'
+                        #just for example this is a constant value
+                        operation_status = True
                         delivery_required = True
-                        print(f"[central] event {id}, opening locks")
+                        print(f"[central] event {old_id}, opening locks...")
                     else: 
                         pincode_comp = False
-                        print(f"[central] event {id}, wrong PIN detected!")
+                        print(f"[central] event {old_id}, wrong PIN detected!")
                 else:
-                    print(f"[central] event {id}, order was blocked")
-                    details = {
-                        "id": id,
-                        "source": "",
-                        "operation": "count_direction",
-                        "deliver_to": "positioning",
-                        "direction": 0,
-                        "speed": 0,
-                        "distance": 0,
-                        "time": 0,
-                        "x": 0,
-                        "y": 0
+                    print(f"[central] event {old_id}, order was blocked!")
+
+                    camera_details = {
+                    "id": old_id,
+                    "operation": "deactivate",
+                    "deliver_to": "camera"
                     }
-                    print(f"[central] event {id}, way back is counting")
+                    _requests_queue.put(camera_details)
+
+                    error_details = {
+                    "id": old_id,
+                    "operation": "bruteforce",
+                    "deliver_to": "monitor"
+                    }
+                    _requests_queue.put(error_details)
+
+                    details['id'] = old_id
+                    details['deliver_to'] = 'position'
+                    details['operation'] = 'count_direction'
+                    details['x1'] = 0
+                    details['y1'] = 0
+                    print(f"[central] event {old_id}, way back is counting...")
                     delivery_required = True
+            else:
+                details['id'] = old_id
+                details['deliver_to'] = 'monitor'
+                details['operation'] = 'attention'
+                delivery_required = True
         
         elif details['operation'] == 'stop':
-
             if (round(details['x'],-1) == 0) and (round(details['y'],-1) == 0):
-                details = {
+                result_details = {
                     "id": id,
-                    "source": "",
-                    "operation": "ready",
+                    "operation": "operation_status",
                     "deliver_to": "communication"
                     }
-                delivery_required = True
+                result_details['status'] = operation_status
+                _requests_queue.put(result_details)
+                delivery_required = False
             else:
-            #if pincode_comp and (round(details['x'],-1) == target_x) and (details['y'] == target_y):
-                if (round(details['x'],-1) == round(target_x,-1)) and (round(details['y'],-1) == round(target_y,-1)):
+            #if pincode_comp and (round(details['x'],-1) == x1) and (details['y'] == y1):
+                if (round(details['x'],-1) == round(x1,-1)) and (round(details['y'],-1) == round(y1,-1)):
                     destination_point = True
-                    print(f"[central] event {id}, robot is in destination point, ready for PIN!")
-                    # details['deliver_to'] = 'sensors'
-                    # details['operation'] = 'lock_opening'
-                    # delivery_required = True
+                    details['deliver_to'] = 'camera'
+                    details['operation'] = 'activate'
+                    delivery_required = True
+                    print(f"[central] event {id}, robot is in destination point, activating camera...")
                 else:
-                    print(f"[error] event {id}, robot is in not correct position! Expected {target_x} : {target_y} but received {details['x']} : {details['y']}")
+                    print(f"[error] event {id}, robot is in not correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
         
         elif details['operation'] == 'lock_closing':
-            details = {
+            
+            camera_details = {
             "id": id,
-            "source": "",
-            "operation": "count_direction",
-            "deliver_to": "positioning",
-            "direction": 0,
-            "speed": 0,
-            "distance": 0,
-            "time": 0,
-            "x": 0,
-            "y": 0
+            "operation": "deactivate",
+            "deliver_to": "camera"
             }
-            print(f"[central] event {id}, way back is counting")
+            _requests_queue.put(camera_details)
+
+            details['deliver_to'] = 'position'
+            details['operation'] = 'count_direction'
+            details['x1'] = 0
+            details['y1'] = 0
+            print(f"[central] event {id}, way back is counting...")
             delivery_required = True
-            # details = {
-            #         "id": id,
-            #         "source": "",
-            #         "operation": "ready",
-            #         "deliver_to": "communication"
-            #         }
-            # delivery_required = True
         else:
             print(f"[warning] unknown operation!\n{details}")                
         if delivery_required:

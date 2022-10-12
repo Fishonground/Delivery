@@ -12,31 +12,16 @@ import base64
 
 _requests_queue: multiprocessing.Queue = None
 
-def close_lock(id, details, was):
-    while True:
-        now = time.time()
-        if (now-was) >= 5:
-            print(f"[lock_closing] event {id}, {now}")
-            details['deliver_to'] = 'central'
-            details['operation'] = 'lock_closing'
-            proceed_to_deliver(id, details)
-            break
-        else:
-            time.sleep(1)
-
 
 def handle_event(id, details_str):
     details = json.loads(details_str)
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
     try:
         delivery_required = False
-        if details['operation'] == 'lock_opening':
-            details['deliver_to'] = 'central'
-            details['operation'] = 'lock_opening'
-            delivery_required = True
-            was = time.time();
-            print(f"[lock_opening] event {id}, {was}")
-            threading.Thread(target=lambda: close_lock(id, details, was)).start()
+        if details['operation'] == 'activate':
+            print(f"[camera] event {id}, activated")
+        elif details['operation'] == 'deactivate':
+            print(f"[camera] event {id}, deactivated")
         else:
             print(f"[warning] unknown operation!\n{details}")                
         if delivery_required:
@@ -48,23 +33,23 @@ def handle_event(id, details_str):
 
 def consumer_job(args, config):
     # Create Consumer instance
-    sensors_consumer = Consumer(config)
+    camera_consumer = Consumer(config)
 
     # Set up a callback to handle the '--reset' flag.
-    def reset_offset(sensors_consumer, partitions):
+    def reset_offset(camera_consumer, partitions):
         if args.reset:
             for p in partitions:
                 p.offset = OFFSET_BEGINNING
-            sensors_consumer.assign(partitions)
+            camera_consumer.assign(partitions)
 
     # Subscribe to topic
-    topic = "sensors"
-    sensors_consumer.subscribe([topic], on_assign=reset_offset)
+    topic = "camera"
+    camera_consumer.subscribe([topic], on_assign=reset_offset)
 
     # Poll for new messages from Kafka and print them.
     try:
         while True:
-            msg = sensors_consumer.poll(1.0)
+            msg = camera_consumer.poll(1.0)
             if msg is None:
                 pass
             elif msg.error():
@@ -80,7 +65,7 @@ def consumer_job(args, config):
     except KeyboardInterrupt:
         pass
     finally:
-        sensors_consumer.close()
+        camera_consumer.close()
 
 
 def start_consumer(args, config):
