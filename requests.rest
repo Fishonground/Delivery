@@ -6,8 +6,8 @@ auth: very-secure-token
 
 {
     "pincode": 12345,
-    "x": 64,
-    "y": 32
+    "x": 90,
+    "y": 90
 } 
 
 ### send the pincode

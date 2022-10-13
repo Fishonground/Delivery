@@ -18,7 +18,7 @@ direction = 0
 
 def move_move(id, details, journey_time):
     while True:
-        time.sleep(journey_time-0.1)
+        time.sleep(max(journey_time-0.1,0))
         print(f"[motion] robot went an iteration")
         now = time.time()
         details['operation'] = "stop"

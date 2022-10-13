@@ -3,6 +3,7 @@
 from datetime import datetime
 import hashlib
 import multiprocessing
+from random import randrange
 import threading
 import time
 from confluent_kafka import Consumer, OFFSET_BEGINNING
@@ -20,6 +21,7 @@ attempts = 3
 destination_point = False
 old_id = ''
 operation_status = False
+coord_array = []
 
 def check_password(hashed_password, user_password):
     password, salt = hashed_password.split(':')
@@ -37,6 +39,7 @@ def handle_event(id, details_str):
     global destination_point
     global old_id
     global operation_status
+    global coord_array
     
     try:
         delivery_required = False
@@ -50,8 +53,12 @@ def handle_event(id, details_str):
             details['pincode'] = ''
             x1 = details['x1']
             y1 = details['y1']
+            amount = randrange(2, 11)
+            for i in range(amount):
+                temp_array = [x1/amount*(i+1),y1/amount*(i+1)] 
+                coord_array.append(temp_array)
             print(f"[central] event {id}, order to {details['x1']} : {details['y1']} in working...")
-
+            print(coord_array)
             global _requests_queue 
             confirmation_details = {
             "id": id,
@@ -64,6 +71,9 @@ def handle_event(id, details_str):
 
             details['deliver_to'] = 'position'
             details['operation'] = 'count_direction'
+            temp_array = coord_array.pop(0)
+            details['x1'] = temp_array.pop(0)
+            details['y1'] = temp_array.pop(0)
             print(f"[central] event {id}, order is counting...")
             delivery_required = True
 
@@ -132,16 +142,22 @@ def handle_event(id, details_str):
                 result_details['status'] = operation_status
                 _requests_queue.put(result_details)
                 delivery_required = False
+            elif (round(details['x'],-1) == round(x1,-1)) and (round(details['y'],-1) == round(y1,-1)):
+                destination_point = True
+                details['deliver_to'] = 'camera'
+                details['operation'] = 'activate'
+                delivery_required = True
+                print(f"[central] event {id}, robot is in destination point, activating camera...")
+            elif coord_array:
+                details['deliver_to'] = 'position'
+                details['operation'] = 'count_direction'
+                temp_array = coord_array.pop(0)
+                details['x1'] = temp_array.pop(0)
+                details['y1'] = temp_array.pop(0)
+                print(f"[central] event {id}, next step is counting...")
+                delivery_required = True
             else:
-            #if pincode_comp and (round(details['x'],-1) == x1) and (details['y'] == y1):
-                if (round(details['x'],-1) == round(x1,-1)) and (round(details['y'],-1) == round(y1,-1)):
-                    destination_point = True
-                    details['deliver_to'] = 'camera'
-                    details['operation'] = 'activate'
-                    delivery_required = True
-                    print(f"[central] event {id}, robot is in destination point, activating camera...")
-                else:
-                    print(f"[error] event {id}, robot is in not correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
+                print(f"[error] event {id}, robot is in not correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
         
         elif details['operation'] == 'lock_closing':
             

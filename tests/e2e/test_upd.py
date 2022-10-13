@@ -38,8 +38,8 @@ def listener(event):
 def order():
     data = {
         "pincode": 12345,
-        "x": 64,
-        "y": 32
+        "x": 90,
+        "y": 90
     }
     response = requests.post(
         "http://0.0.0.0:6008/ordering",
@@ -47,6 +47,32 @@ def order():
         headers={"Content-Type": "application/json", "auth": "very-secure-token"},
     )    
     assert response.status_code == 200
+
+def pincode(pin):
+    data = {
+        "pincode": pin
+    }
+    response = requests.post(
+        "http://localhost:6006/pincoding",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
+    )    
+    assert response.status_code == 200
+
+def dest_point_is_reached():
+    while(True):
+        for m in messages:
+            if str(m).find('"operation": "activate", "deliver_to": "camera", "source": "central"') > 0:
+                return True
+        sleep(2)   
+
+def base_is_reached():
+    while(True):
+        for m in messages:
+            if str(m).find('"operation": "operation_status", "deliver_to": "communication"') > 0:
+                return True
+        sleep(2)   
+    
 
 ### Functionally tests
 ### Yes, it could be done better, but it's just a simple and straightforward realization
@@ -57,19 +83,13 @@ def test_full_functionality():
     thread.start()
     sleep(2)
     order()
-    sleep(50)
-    data = {
-        "pincode": 12345
-    }
-    response = requests.post(
-        "http://localhost:6006/pincoding",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-    )    
-    assert response.status_code == 200
-    sleep(50)
-    event.set()
-    thread.join()
+    #sleep(50)
+    if dest_point_is_reached():
+        pincode(12345)
+    #sleep(50)
+    if base_is_reached():
+        event.set()
+        thread.join()
     global dict
     global messages
     for m in messages:
@@ -100,45 +120,24 @@ def test_full_functionality():
             dict['sensors'] = 2
         elif str(m).find('"operation": "deactivate", "deliver_to": "camera", "source": "central"') > 0 :
             dict['camera'] = 2
-        elif str(m).find('"operation": "operation_status", "deliver_to": "communication", "source": "central"') > 0 :
+        elif str(m).find('"operation": "operation_status", "deliver_to": "communication"') > 0 :
             dict['result'] = 1
     #print (dict)
-    assert dict['result'] == 1
-    messages = []
-    #details = json.loads(str(messages[0]))
-    #details1 = json.loads(str(messages[1]))
-    #assert details['id'] == details1['id'] # id
-    ##assert (messages[0]['activate'] == True) or (messages[1]['activate'] == True)
-    #messages = []
-
-def test_ordering_block():
-    global dict
     assert dict['ordering'] == 2
-
-def test_position_block():
-    global dict
     assert dict['position'] == 3
-
-def test_motion_block():
-    global dict
     assert dict['motion'] == 3
-
-def test_camera_block():
-    global dict
     assert dict['camera'] == 2
-
-def test_hmi_block():
-    global dict
     assert dict['hmi'] == 1
-
-def test_sensors_block():
-    global dict
+    assert dict['result'] == 1
     assert dict['sensors'] == 2
+    messages = []
 
 ### Security test 13 pou of 13, but not all reallized, truthly
 
 #2 
 def test_unauthorized_order():
+    #in test's you can find out .sleep(5) - it's to protect test by anti-bruteforce system
+    time.sleep(5)
     #for example of part of security - here was an 'auth' header
     data = {
         "pincode": 12345,
@@ -165,6 +164,7 @@ def test_incorrect_order():
         headers={"Content-Type": "application/json", "auth": "very-secure-token"},
         )    
     assert response.status_code == 400
+    
 
 #1 
 def test_ddos_communication():
@@ -174,18 +174,12 @@ def test_ddos_communication():
     thread = threading.Thread(target=lambda: listener(event))
     thread.start()
     sleep(2)
-    #order
+    order()
     data = {
         "pincode": 12345,
-        "x": 64,
-        "y": 32
+        "x": 90,
+        "y": 90
     }
-    response = requests.post(
-        "http://0.0.0.0:6008/ordering",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-        )    
-    assert response.status_code == 200
     for i in range(1,8):
         response = requests.post(
         "http://0.0.0.0:6008/ordering",
@@ -193,22 +187,18 @@ def test_ddos_communication():
         headers={"Content-Type": "application/json", "auth": "very-secure-token"},
         )    
         assert response.status_code == 504
-    sleep(3)
-    event.set()
-    thread.join()
-    #global messages
-    #for m in messages:
+    sleep(2)
+    
+    global messages
+    # for m in messages:
     #    print(m)
-    sleep(50)
-    data = {
-        "pincode": 12345
-    }
-    response = requests.post(
-        "http://localhost:6006/pincoding",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-    )    
-    assert response.status_code == 200
+    #sleep(50)
+    if dest_point_is_reached():
+        pincode(12345)
+    #sleep(50)
+    if base_is_reached():
+        event.set()
+        thread.join()
     messages = []
 #4 
 def test_third_party_attack():
@@ -220,49 +210,29 @@ def test_communication_hacking():
     pass
 #6 
 def test_repeating_order():
-    time.sleep(50)
+    time.sleep(5)
     event = threading.Event()
     thread = threading.Thread(target=lambda: listener(event))
     thread.start()
     sleep(2)
-    data = {
-        "pincode": 12345,
-        "x": 64,
-        "y": 32
-    }
-    response = requests.post(
-        "http://0.0.0.0:6008/ordering",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-        )    
-    assert response.status_code == 200
+    order()
     time.sleep(5)
-    response = requests.post(
-        "http://0.0.0.0:6008/ordering",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-        )    
-    assert response.status_code == 200
-    sleep(2)
-    event.set()
-    thread.join()
+    order()
     global messages
     global dict
+    #sleep(50)
+    if dest_point_is_reached():
+        pincode(12345)
+    #sleep(50)
     for m in messages:
         if str(m).find('operation": "reordering", "deliver_to": "monitor", "source": "monitor"') > 0 :
             dict['reordering'] = 1
-    sleep(50)
-    data = {
-        "pincode": 12345
-    }
-    response = requests.post(
-        "http://localhost:6006/pincoding",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-    )    
-    assert response.status_code == 200
+
+    if base_is_reached():
+        event.set()
+        thread.join()
+        messages = []
     assert dict['reordering'] == 1
-    messages = []
     dict = {}
 #7 
 def test_inaction():
@@ -278,92 +248,53 @@ def test_gps_broken():
     pass
 #10 
 def test_password_not_in_destination_point():
-    time.sleep(50)
+    time.sleep(5)
     event = threading.Event()
     thread = threading.Thread(target=lambda: listener(event))
     thread.start()
     sleep(2)
-    data = {
-        "pincode": 12345,
-        "x": 64,
-        "y": 32
-    }
-    response = requests.post(
-        "http://0.0.0.0:6008/ordering",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-        )    
-    assert response.status_code == 200
+    order()
     global messages
     global dict
-    sleep(4)
-    data = {
-        "pincode": 123456
-    }
-    response = requests.post(
-        "http://localhost:6006/pincoding",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-    )    
-    assert response.status_code == 200
-    time.sleep(1)
-    event.set()
-    thread.join()
-    sleep(50)
-    data = {
-        "pincode": 12345
-    }
-    response = requests.post(
-        "http://localhost:6006/pincoding",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-    )    
-    assert response.status_code == 200
-    for m in messages:
-        if str(m).find('operation": "attention", "deliver_to": "monitor", "source": "central"') > 0 :
-            dict['attention'] = 1
-    assert dict['attention'] == 1
-    messages = []
+    sleep(2)
+    pincode(123456)
+    time.sleep(2)
+    #sleep(50)
+    if dest_point_is_reached():
+        pincode(12345)
+    #sleep(50)
+    if base_is_reached():
+        event.set()
+        thread.join()
+        for m in messages:
+            if str(m).find('operation": "attention", "deliver_to": "monitor", "source": "central"') > 0 :
+                dict['attention'] = 1
+        assert dict['attention'] == 1
+        messages = []
     dict = {}
 #11 
 def test_bruteforce():
-    time.sleep(50)
+    time.sleep(5)
     event = threading.Event()
     thread = threading.Thread(target=lambda: listener(event))
     thread.start()
     sleep(2)
-    data = {
-        "pincode": 12345,
-        "x": 64,
-        "y": 32
-    }
-    response = requests.post(
-        "http://0.0.0.0:6008/ordering",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-        )    
-    assert response.status_code == 200
+    order()
     global messages
     global dict
-    sleep(40)
-    data = {
-        "pincode": 123456
-    }
-    for i in range(1,4):
-        response = requests.post(
-        "http://localhost:6006/pincoding",
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-        )    
-        assert response.status_code == 200
-    time.sleep(1)
-    event.set()
-    thread.join()
+    if dest_point_is_reached():
+        for i in range(1,5):
+            pincode(123456)
+    time.sleep(2)
     for m in messages:
         if str(m).find('operation": "bruteforce", "deliver_to": "monitor", "source": "central"') > 0 :
             dict['bruteforce'] = 1
+    
+    if base_is_reached():
+        event.set()
+        thread.join()
+        messages = []
     assert dict['bruteforce'] == 1
-    messages = []
     dict = {}
 #12 
 def test_component_lie():
@@ -376,169 +307,5 @@ def test_sensitive_output():
     #tbd validation
     pass
 
-
-
-
-# def test_write_order():
-#     sleep(5)
-#     event = threading.Event()
-#     thread = threading.Thread(target=lambda: listener(event))
-#     thread.start()
-#     time.sleep(5)
-#     activate()
-#     sleep(1)
-#     event.set()
-#     thread.join()
-#     global messages
-#     details = json.loads(str(messages[0]))
-#     assert (details['operation'] == 'activate')
-#     details = json.loads(str(messages[1]))
-#     assert (details['operation'] == 'ask_task') # operation
-#     messages = []
-#     deactivate()
-
-# ### Action tests
-# def send_task():
-#     data = {
-#         "x1": 50,
-#         "y1": 50,
-#         "z1": 10,
-#         "expenditure": 10,
-#         "x2": 55,
-#         "y2": 55,
-#         "z2": 10,
-#         "close_key": 12345
-#     }
-#     response = requests.post(
-#         "http://0.0.0.0:6009/new-task",
-#         data=json.dumps(data),
-#         headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-#     )
-
-
-# def test_success_result():
-#     sleep(10)
-#     event = threading.Event()
-#     activate()
-#     time.sleep(5)
-#     thread = threading.Thread(target=lambda: listener(event))
-#     thread.start()
-#     time.sleep(5)
-#     send_task()
-#     time.sleep(120)
-#     event.set()
-#     thread.join()
-#     global messages
-#     assert len(messages) == 13
-#     details = json.loads(str(messages[0]))
-#     details1 = json.loads(str(messages[len(messages)-1]))
-#     assert details['id'] == details1['id'] # id
-#     assert (details1['operation'] == 'operation_status')
-#     messages = []
-#     deactivate()
-
-# def test_surface_result():
-#     time.sleep(10)
-#     event = threading.Event()
-#     activate()
-#     time.sleep(5)
-#     thread = threading.Thread(target=lambda: listener(event))
-#     thread.start()
-#     time.sleep(5)
-#     send_task()
-#     time.sleep(120)
-#     event.set()
-#     thread.join()
-#     global messages
-#     details = json.loads(str(messages[len(messages)-1]))
-#     fields_max = 300/details['expenditure']
-#     fields = 0
-#     for s in details['surface']:
-#         for f in s:
-#             if f == 'X': 
-#                 fields+=1
-#     assert fields_max >= fields 
-#     messages = []
-#     deactivate()
-
-
-
-#     ### security tests
-
-# def test_activate_without_token():
-#     time.sleep(10)
-#     data = {
-#         "somedata": "test"
-#     }
-#     response = requests.post(
-#         "http://0.0.0.0:6009/activate",
-#         data=json.dumps(data),
-#         headers={"Content-Type": "application/json", "auth": "blablabla"},
-#     )
-#     assert response.status_code == 401
-#     deactivate()
-
-# def send_wrong_task():
-#     data = {
-#         "x1": 50,
-#         "y1": 50,
-#         "z1": 10,
-#         "expenditure": 10,
-#         "x2": 55,
-#         "y2": 55,
-#         "z2": 10,
-#         "close_key": 5467
-#     }
-#     response = requests.post(
-#         "http://0.0.0.0:6009/new-task",
-#         data=json.dumps(data),
-#         headers={"Content-Type": "application/json", "auth": "very-secure-token"},
-#     )
-
-# def test_bruteforce():
-#      time.sleep(10)
-#      event = threading.Event()
-#      activate()
-#      time.sleep(5)
-#      thread = threading.Thread(target=lambda: listener(event))
-#      thread.start()
-#      time.sleep(5)
-#      send_wrong_task()
-#      time.sleep(1)
-#      send_wrong_task()
-#      time.sleep(1)
-#      send_wrong_task()
-#      time.sleep(1)
-#      send_wrong_task()
-#      time.sleep(3)
-#      event.set()
-#      thread.join()
-#      global messages
-#      details = json.loads(str(messages[len(messages)-1]))
-#      assert details['operation'] == 'error' # id
-#      assert details['err_msg'] == 'Task is under bruteforce!'
-#      messages = []
-#      deactivate()
-
-# def test_repeated_task():
-#     time.sleep(10)
-#     event = threading.Event()
-#     activate()
-#     time.sleep(5)
-#     thread = threading.Thread(target=lambda: listener(event))
-#     thread.start()
-#     time.sleep(5)
-#     send_task()
-#     time.sleep(2)
-#     send_task()
-#     time.sleep(2)
-#     event.set()
-#     thread.join()
-#     global messages
-#     #print(messages)
-#     details = json.loads(str(messages[len(messages)-1]))
-#     assert details['operation'] == 'task'
-#     messages = []
-#     deactivate()
 
     
