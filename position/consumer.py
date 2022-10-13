@@ -55,6 +55,18 @@ def handle_event(id, details_str):
             details['x'] = x_coord
             details['y'] = y_coord
             delivery_required = True
+
+            gps_details = {
+            "id": id,
+            "operation": "nonexistent",
+            "deliver_to": "gps",
+            "source": "",
+            "x": x_coord,
+            "y": y_coord
+            }
+            proceed_to_deliver(id, gps_details)
+            #_requests_queue.put(gps_details)
+            
             print(f"[location] event {id}, stopped in {details['x']} : {details['y']}")
         else:
             print(f"[warning] unknown operation!\n{details}")                

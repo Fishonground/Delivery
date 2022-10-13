@@ -24,16 +24,25 @@ def handle_event(id, details_str):
         global x
         global y
         if details['operation'] == 'where_am_i':
-            if random.randrange(1, 30) <= 20:
-                details['deliver_to'] = 'central'
-                details['operation'] = 'gps'
-                details['x'] = x
-                details['y'] = y
+            if random.randint(1, 30) <= 20:
+                details = {
+                'id' : id,
+                'deliver_to' : 'central',
+                'operation' : 'gps',
+                'source' : 'gps',
+                'x' : x,
+                'y' : y
+                }
                 delivery_required = True
             else:
-                details['deliver_to'] = 'central'
-                details['operation'] = 'gps_error'
-        if details['operation'] == 'nonexistent':
+                details = {
+                'id' : id,
+                'deliver_to' : 'central',
+                'operation' : 'gps_error',
+                'source' : 'gps'
+                }
+                delivery_required = True
+        elif details['operation'] == 'nonexistent':
             x = details['x']
             y = details['y']
         else:

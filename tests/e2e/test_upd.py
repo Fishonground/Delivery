@@ -201,13 +201,13 @@ def test_ddos_communication():
         thread.join()
     messages = []
 #4 
-def test_third_party_attack():
-    #tbd validation
-    pass
+# def test_third_party_attack():
+#     #tbd validation
+#     pass
 #5 
-def test_communication_hacking():
-    #isn't availible for nowtime
-    pass
+# def test_communication_hacking():
+#     #isn't availible for nowtime
+#     pass
 #6 
 def test_repeating_order():
     time.sleep(5)
@@ -235,17 +235,17 @@ def test_repeating_order():
     assert dict['reordering'] == 1
     dict = {}
 #7 
-def test_inaction():
-    #this is a good question, what should we do with this problem
-    #I'm thinking about some watchdog, which will restart components?)
-    pass
+# def test_inaction():
+#     #this is a good question, what should we do with this problem
+#     #I'm thinking about some watchdog, which will restart components?)
+#     pass
 #8 
-def test_hidden_fields():
-    pass
-#9 
-def test_gps_broken():
-    #isn't availible for nowtime
-    pass
+# def test_hidden_fields():
+#     pass
+# #9 
+# def test_gps_broken():
+#     #isn't availible for nowtime
+#     pass
 #10 
 def test_password_not_in_destination_point():
     time.sleep(5)
@@ -296,16 +296,16 @@ def test_bruteforce():
         messages = []
     assert dict['bruteforce'] == 1
     dict = {}
-#12 
-def test_component_lie():
-    #isn't availible for nowtime
-    pass
-#13 
-def test_sensitive_output():
-    #can be tested only by hands adding this information into the system,
-    #cause this test suggests checking of compensation the SUCCESSFULL attack result
-    #tbd validation
-    pass
+# #12 
+# def test_component_lie():
+#     #isn't availible for nowtime
+#     pass
+# #13 
+# def test_sensitive_output():
+#     #can be tested only by hands adding this information into the system,
+#     #cause this test suggests checking of compensation the SUCCESSFULL attack result
+#     #tbd validation
+#     pass
 
 
     

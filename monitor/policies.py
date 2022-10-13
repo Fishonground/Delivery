@@ -87,10 +87,14 @@ def check_operation(id, details):
         authorized = True
     #simple checking length of messages
     if  src == 'gps' and dst == 'central'\
-        and operation == 'gps' and len(details) == 5:
+        and operation == 'gps' and len(details) == 6:
         authorized = True
     if  src == 'gps' and dst == 'central'\
         and operation == 'gps_error' and len(details) == 4:
         authorized = True
+    if  src == 'position' and dst == 'gps'\
+        and operation == 'nonexistent':
+        authorized = True
+        
 
     return authorized
