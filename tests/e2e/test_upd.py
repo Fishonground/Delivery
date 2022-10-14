@@ -38,8 +38,8 @@ def listener(event):
 def order():
     data = {
         "pincode": 12345,
-        "x": 90,
-        "y": 90
+        "x": 40,
+        "y": 40
     }
     response = requests.post(
         "http://0.0.0.0:6008/ordering",
