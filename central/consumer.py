@@ -211,6 +211,8 @@ def handle_event(id, details_str):
                 else:
                     print(f"[error] event {id}, robot is in not correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
             else:
+                details['x'] = x
+                details['y'] = y
                 if gps_error:
                     coord_array = coord_array.clear()
                     error_details = {
