@@ -278,7 +278,7 @@ def handle_event(id, details_str):
                 else:
                     print(f"[error] it seems u can't be here, please, check code!")
             else:
-                coord_array = coord_array.clear()
+                #coord_array = coord_array.clear()
                 error_details = {
                     "id": old_id,
                     "operation": "gps_error_repeat",
