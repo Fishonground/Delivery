@@ -260,9 +260,9 @@ def test_password_not_in_destination_point():
     order()
     global messages
     global dict
-    sleep(2)
+    sleep(1)
     pincode(123456)
-    time.sleep(2)
+    time.sleep(1)
     #sleep(50)
     if dest_point_is_reached():
         pincode(12345)
