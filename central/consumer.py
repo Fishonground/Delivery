@@ -84,6 +84,7 @@ def handle_event(id, details_str):
             x = 0
             y = 0
             gps_error = False
+            coord_array = []
 
             amount = randrange(2, 11)
             for i in range(amount):
