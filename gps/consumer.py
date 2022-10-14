@@ -43,9 +43,9 @@ def handle_event(id, details_str):
                 'x' : -3,
                 'y' : -3
                 }
-                proceed_to_deliver(id, extra_details_wrong)
-                time.sleep(0.1)
-                proceed_to_deliver(id, extra_details_wrong)
+                #proceed_to_deliver(id, extra_details_wrong)
+                #time.sleep(0.1)
+                #proceed_to_deliver(id, extra_details_wrong)
                 # extra_details_correct = {
                 # 'id' : id,
                 # 'deliver_to' : 'central',
