@@ -62,8 +62,11 @@ def pincode(pin):
 def dest_point_is_reached():
     while(True):
         for m in messages:
-            if str(m).find('"operation": "activate", "deliver_to": "camera", "source": "central"') > 0:
+            #print(m)
+            if (str(m).find('"operation": "activate", "deliver_to": "camera", "source": "central"') > 0) or (str(m).find('"deliver_to": "camera", "operation": "activate", "source": "central"') > 0):
                 return True
+            elif (str(m).find('"operation": "operation_status", "deliver_to": "communication"') > 0):
+                return False
         sleep(2)   
 
 def base_is_reached():
@@ -85,6 +88,7 @@ def test_full_functionality():
     order()
     #sleep(50)
     if dest_point_is_reached():
+        sleep(1)
         pincode(12345)
     #sleep(50)
     if base_is_reached():

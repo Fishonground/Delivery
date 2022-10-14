@@ -181,8 +181,9 @@ def handle_event(id, details_str):
             
         
         elif details['operation'] == 'gps':
-            gps_error = False
+            
             if (abs(details['x'] - x) < 2) and (abs(details['y'] - y) < 2):
+                gps_error = False
                 #check_position(details)
                 if (abs(x-0) < 2) and (abs(y-0) < 2):
                     result_details = {
@@ -210,12 +211,28 @@ def handle_event(id, details_str):
                 else:
                     print(f"[error] event {id}, robot is in not correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
             else:
-                error_details = {
+                if gps_error:
+                    coord_array = coord_array.clear()
+                    error_details = {
                     "id": old_id,
-                    "operation": "gps_bad_coord",
+                    "operation": "gps_error_repeat",
                     "deliver_to": "monitor"
                     }
-                _requests_queue.put(error_details)
+                    _requests_queue.put(error_details)
+                    details['deliver_to'] = 'position'
+                    details['operation'] = 'count_direction'
+                    details['x1'] = 0
+                    details['y1'] = 0
+                    print(f"[central] event {id}, way back is counting...")
+                    delivery_required = True
+                else:
+                    gps_error = True
+                    error_details = {
+                        "id": old_id,
+                        "operation": "gps_bad_coord",
+                        "deliver_to": "monitor"
+                        }
+                    _requests_queue.put(error_details)
 
         elif details['operation'] == 'gps_error':
             if not gps_error:
@@ -259,6 +276,7 @@ def handle_event(id, details_str):
                 else:
                     print(f"[error] it seems u can't be here, please, check code!")
             else:
+                coord_array = coord_array.clear()
                 error_details = {
                     "id": old_id,
                     "operation": "gps_error_repeat",
