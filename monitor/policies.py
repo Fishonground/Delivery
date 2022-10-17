@@ -16,7 +16,7 @@ def check_operation(id, details):
     if  src == 'communication' and dst == 'central' and operation == 'ordering':
         if type(details['pincode']) == str \
                 and type(details['x1']) == int and type(details['y1']) == int \
-                and abs(details['x1']) <= 200 and abs(details['y1']) <= 200  and len(details) == 7 :
+                and abs(details['x1']) <= 100 and abs(details['y1']) <= 100  and len(details) == 7 :
             if not ordering:
                 authorized = True
                 ordering = True
