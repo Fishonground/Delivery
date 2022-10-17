@@ -35,26 +35,6 @@ def handle_event(id, details_str):
                 }
                 delivery_required = True
 
-                extra_details_wrong = {
-                'id' : id,
-                'deliver_to' : 'central',
-                'operation' : 'gps',
-                'source' : 'gps',
-                'x' : -3,
-                'y' : -3
-                }
-                #proceed_to_deliver(id, extra_details_wrong)
-                #time.sleep(0.1)
-                #proceed_to_deliver(id, extra_details_wrong)
-                # extra_details_correct = {
-                # 'id' : id,
-                # 'deliver_to' : 'central',
-                # 'operation' : 'gps',
-                # 'source' : 'gps',
-                # 'x' : x,
-                # 'y' : y
-                # }
-                # proceed_to_deliver(id, extra_details_correct)
 
             else:
                 details = {
