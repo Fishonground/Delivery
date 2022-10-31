@@ -26,6 +26,7 @@ old_id = ''
 operation_status = False
 coord_array = []
 gps_error = False
+UNIC_NAME_CENTRAL = "central"
 
 def check_password(hashed_password, user_password):
     password, salt = hashed_password.split(':')
@@ -66,12 +67,16 @@ def handle_event(id, details_str):
     global y
     global gps_error
     
+    global UNIC_NAME_CENTRAL
     try:
+        details['source'] = UNIC_NAME_CENTRAL
         delivery_required = False
-        # global x 
-        # global y
-        # global gps_error
-        if details['operation'] == 'ordering':
+        if details['operation'] == 'set_name':
+            
+            UNIC_NAME_CENTRAL = details['name']
+            #Name.unic_name_motion = details['name']
+            delivery_required = False
+        elif details['operation'] == 'ordering':
             pincode_comp = False
             destination_point = False
             operation_status = False
@@ -97,8 +102,8 @@ def handle_event(id, details_str):
             confirmation_details = {
             "id": id,
             "operation": "confirmation",
-            "deliver_to": "communication",
-            "source": "",
+            "deliver_to": "communication_out",
+            "source": UNIC_NAME_CENTRAL,
             "confirmation": True
             }
             _requests_queue.put(confirmation_details)
@@ -142,14 +147,16 @@ def handle_event(id, details_str):
                     camera_details = {
                     "id": old_id,
                     "operation": "deactivate",
-                    "deliver_to": "camera"
+                    "deliver_to": "camera",
+                    "source": UNIC_NAME_CENTRAL
                     }
                     _requests_queue.put(camera_details)
 
                     error_details = {
                     "id": old_id,
                     "operation": "bruteforce",
-                    "deliver_to": "monitor"
+                    "deliver_to": "monitor",
+                    "source": UNIC_NAME_CENTRAL
                     }
                     _requests_queue.put(error_details)
 
@@ -190,7 +197,8 @@ def handle_event(id, details_str):
                     result_details = {
                         "id": id,
                         "operation": "operation_status",
-                        "deliver_to": "communication"
+                        "deliver_to": "communication_out",
+                        "source": UNIC_NAME_CENTRAL
                     }
                     result_details['status'] = operation_status
                     _requests_queue.put(result_details)
@@ -219,7 +227,8 @@ def handle_event(id, details_str):
                     error_details = {
                     "id": old_id,
                     "operation": "gps_error_repeat",
-                    "deliver_to": "monitor"
+                    "deliver_to": "monitor",
+                    "source": UNIC_NAME_CENTRAL
                     }
                     _requests_queue.put(error_details)
                     details['deliver_to'] = 'position'
@@ -233,7 +242,8 @@ def handle_event(id, details_str):
                     error_details = {
                         "id": old_id,
                         "operation": "gps_bad_coord",
-                        "deliver_to": "monitor"
+                        "deliver_to": "monitor",
+                        "source": UNIC_NAME_CENTRAL
                         }
                     _requests_queue.put(error_details)
 
@@ -243,7 +253,8 @@ def handle_event(id, details_str):
                     result_details = {
                         "id": id,
                         "operation": "operation_status",
-                        "deliver_to": "communication"
+                        "deliver_to": "communication_out",
+                        "source": UNIC_NAME_CENTRAL
                     }
                     result_details['status'] = operation_status
                     _requests_queue.put(result_details)
@@ -283,7 +294,8 @@ def handle_event(id, details_str):
                 error_details = {
                     "id": old_id,
                     "operation": "gps_error_repeat",
-                    "deliver_to": "monitor"
+                    "deliver_to": "monitor",
+                    "source": UNIC_NAME_CENTRAL
                     }
                 _requests_queue.put(error_details)
                 details['deliver_to'] = 'position'
@@ -299,7 +311,8 @@ def handle_event(id, details_str):
             camera_details = {
             "id": id,
             "operation": "deactivate",
-            "deliver_to": "camera"
+            "deliver_to": "camera",
+            "source": UNIC_NAME_CENTRAL
             }
             _requests_queue.put(camera_details)
 

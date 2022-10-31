@@ -1,24 +1,36 @@
 # implements Kafka topic consumer functionality
 
 
+import datetime
 import threading
+import time
 from confluent_kafka import Consumer, OFFSET_BEGINNING
 import json
 from policies import check_operation
 from producer import proceed_to_deliver
-
+from policies import UNIC_NAME_MONITOR, UNIC_NAME_CENTRAL
 
 def handle_event(id, details):    
     # print(f"[debug] handling event {id}, {details}")
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
-    if not ((details['source']=='monitor' or details['source']=='central') and details['deliver_to']=='monitor'):
+    text_file = open("/storage/logs.txt", "a+")
+    t = time.time()
+    text_file.write(f"[{t}] id {id}, {details['source']}->{details['deliver_to']}: {details['operation']}\n")
+    #text_file.write(details + "\n")
+
+    if not ((details['source']=='monitor' or details['source']=='central' or details['source']==UNIC_NAME_MONITOR or details['source']==UNIC_NAME_CENTRAL) 
+    and details['deliver_to']=='monitor'):
         if check_operation(id, details):
             proceed_to_deliver(id, details)
         else:
             print("[error] !!!! policies check failed, delivery unauthorized !!! " \
-                f"id: {id}, {details['source']}->{details['deliver_to']}:{details['operation']}"
+                f"id: {id}, {details['source']}->{details['deliver_to']}: {details['operation']}"
                 )
             print(f"[error] suspicious event details: {details}")
+            details['deliver_to'] = 'monitor'
+            details['operation'] = 'policy_error'
+            details['source'] = 'monitor'
+            proceed_to_deliver(id, details)
 
 
 def consumer_job(args, config):

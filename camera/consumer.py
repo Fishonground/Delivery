@@ -11,15 +11,24 @@ import base64
 
 
 _requests_queue: multiprocessing.Queue = None
-
+UNIC_NAME_CAMERA = "camera"
 
 def handle_event(id, details_str):
     details = json.loads(details_str)
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
+    global UNIC_NAME_CAMERA
     try:
+        details['source'] = UNIC_NAME_CAMERA
         delivery_required = False
-        if details['operation'] == 'activate':
+        if details['operation'] == 'set_name':
+            
+            UNIC_NAME_CAMERA = details['name']
+            #Name.unic_name_motion = details['name']
+            delivery_required = False
+        elif details['operation'] == 'activate':
             print(f"[camera] event {id}, activated")
+            name = time.time()
+            text_file = open("/storage/Picture_" + str(name) + ".JPG", "w")
         elif details['operation'] == 'deactivate':
             print(f"[camera] event {id}, deactivated")
         else:

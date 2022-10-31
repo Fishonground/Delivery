@@ -14,35 +14,43 @@ import base64
 _requests_queue: multiprocessing.Queue = None
 x = 0
 y = 0
-
+UNIC_NAME_GPS = "gps"
 
 def handle_event(id, details_str):
     details = json.loads(details_str)
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
+    global UNIC_NAME_GPS
     try:
         delivery_required = False
         global x
         global y
-        if details['operation'] == 'where_am_i':
+        details['source'] = UNIC_NAME_GPS
+        if details['operation'] == 'set_name':
+            
+            UNIC_NAME_GPS = details['name']
+            #Name.unic_name_motion = details['name']
+            delivery_required = False
+        
+        elif details['operation'] == 'where_am_i':
             if random.randint(1, 30) <= 25:
                 details = {
                 'id' : id,
                 'deliver_to' : 'central',
                 'operation' : 'gps',
-                'source' : 'gps',
+                'source' : UNIC_NAME_GPS,
                 'x' : x,
                 'y' : y
                 }
                 delivery_required = True
 
-                extra_details_wrong = {
-                'id' : id,
-                'deliver_to' : 'central',
-                'operation' : 'gps',
-                'source' : 'gps',
-                'x' : -3,
-                'y' : -3
-                }
+                # extra_details_wrong = {
+                # 'id' : id,
+                # 'deliver_to' : 'central',
+                # 'operation' : 'gps',
+                # 'source' : 'gps',
+                # 'x' : -3,
+                # 'y' : -3
+                # }
                 #proceed_to_deliver(id, extra_details_wrong)
                 #time.sleep(0.1)
                 #proceed_to_deliver(id, extra_details_wrong)
@@ -61,7 +69,7 @@ def handle_event(id, details_str):
                 'id' : id,
                 'deliver_to' : 'central',
                 'operation' : 'gps_error',
-                'source' : 'gps'
+                'source' : UNIC_NAME_GPS
                 }
                 delivery_required = True
         elif details['operation'] == 'nonexistent':

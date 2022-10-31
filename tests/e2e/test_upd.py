@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, FileType
 from configparser import ConfigParser
+import os
 import threading
 from time import sleep
 import time
@@ -63,16 +64,16 @@ def dest_point_is_reached():
     while(True):
         for m in messages:
             #print(m)
-            if (str(m).find('"operation": "activate", "deliver_to": "camera", "source": "central"') > 0) or (str(m).find('"deliver_to": "camera", "operation": "activate", "source": "central"') > 0):
+            if (str(m).find('"operation": "activate", "deliver_to": "camera"') > 0) or (str(m).find('"deliver_to": "camera", "operation": "activate"') > 0):
                 return True
-            elif (str(m).find('"operation": "operation_status", "deliver_to": "communication"') > 0):
+            elif (str(m).find('"operation": "operation_status", "deliver_to": "communication_out"') > 0):
                 return False
         sleep(2)   
 
 def base_is_reached():
     while(True):
         for m in messages:
-            if str(m).find('"operation": "operation_status", "deliver_to": "communication"') > 0:
+            if str(m).find('"operation": "operation_status", "deliver_to": "communication_out"') > 0:
                 return True
         sleep(2)   
     
@@ -98,33 +99,33 @@ def test_full_functionality():
     global messages
     for m in messages:
         #print(m)
-        if str(m).find('"operation": "ordering", "deliver_to": "central", "source": "communication"') > 0 :
+        if str(m).find('"operation": "ordering", "deliver_to": "central", "source": "communication_in"') > 0 :
             dict['ordering'] = 1
-        elif str(m).find('"operation": "confirmation", "deliver_to": "communication", "source": "central"') > 0:
+        elif str(m).find('"operation": "confirmation", "deliver_to": "communication_out"') > 0:
             dict['ordering'] = 2
-        elif str(m).find('"operation": "count_direction", "deliver_to": "position", "source": "central"') > 0:
+        elif str(m).find('"operation": "count_direction", "deliver_to": "position"') > 0:
             dict['position'] = 1
-        elif str(m).find('"operation": "count_direction", "deliver_to": "central", "source": "position"') > 0:
+        elif str(m).find('"operation": "count_direction", "deliver_to": "central"') > 0:
             dict['position'] = 2
-        elif str(m).find('"operation": "motion_start", "deliver_to": "motion", "source": "central"') > 0:
+        elif str(m).find('"operation": "motion_start", "deliver_to": "motion"') > 0:
             dict['motion'] = 1
-        elif str(m).find('"operation": "motion_start", "deliver_to": "position", "source": "motion"') > 0 :
+        elif str(m).find('"operation": "motion_start", "deliver_to": "position"') > 0 :
             dict['motion'] = 2
-        elif str(m).find('"operation": "stop", "deliver_to": "position", "source": "motion"') > 0:
+        elif str(m).find('"operation": "stop", "deliver_to": "position"') > 0:
             dict['motion'] = 3
-        elif str(m).find('"operation": "stop", "deliver_to": "central", "source": "position"') > 0 :
+        elif str(m).find('"operation": "stop", "deliver_to": "central"') > 0 :
             dict['position'] = 3
-        elif str(m).find('"operation": "activate", "deliver_to": "camera", "source": "central"') > 0 :
+        elif str(m).find('"operation": "activate", "deliver_to": "camera"') > 0 :
             dict['camera'] = 1
-        elif str(m).find('"operation": "pincoding", "deliver_to": "central", "source": "hmi"') > 0 :
+        elif str(m).find('"operation": "pincoding", "deliver_to": "central"') > 0 :
             dict['hmi'] = 1
-        elif str(m).find('"operation": "lock_opening", "deliver_to": "sensors", "source": "central"') > 0 :
+        elif str(m).find('"operation": "lock_opening", "deliver_to": "sensors"') > 0 :
             dict['sensors'] = 1
-        elif str(m).find('"operation": "lock_closing", "deliver_to": "central", "source": "sensors"') > 0 :
+        elif str(m).find('"operation": "lock_closing", "deliver_to": "central"') > 0 :
             dict['sensors'] = 2
-        elif str(m).find('"operation": "deactivate", "deliver_to": "camera", "source": "central"') > 0 :
+        elif str(m).find('"operation": "deactivate", "deliver_to": "camera"') > 0 :
             dict['camera'] = 2
-        elif str(m).find('"operation": "operation_status", "deliver_to": "communication"') > 0 :
+        elif str(m).find('"operation": "operation_status", "deliver_to": "communication_out"') > 0 :
             dict['result'] = 1
     #print (dict)
     assert dict['ordering'] == 2
@@ -229,7 +230,7 @@ def test_repeating_order():
         pincode(12345)
     #sleep(50)
     for m in messages:
-        if str(m).find('operation": "reordering", "deliver_to": "monitor", "source": "monitor"') > 0 :
+        if str(m).find('"operation": "reordering"') > 0 :
             dict['reordering'] = 1
 
     if base_is_reached():
@@ -252,6 +253,7 @@ def test_repeating_order():
 #     pass
 #10 
 def test_password_not_in_destination_point():
+    pass
     time.sleep(5)
     event = threading.Event()
     thread = threading.Thread(target=lambda: listener(event))
@@ -271,7 +273,7 @@ def test_password_not_in_destination_point():
         event.set()
         thread.join()
         for m in messages:
-            if str(m).find('operation": "attention", "deliver_to": "monitor", "source": "central"') > 0 :
+            if str(m).find('operation": "attention", "deliver_to": "monitor"') > 0 :
                 dict['attention'] = 1
         assert dict['attention'] == 1
         messages = []
@@ -291,7 +293,7 @@ def test_bruteforce():
             pincode(123456)
     time.sleep(2)
     for m in messages:
-        if str(m).find('operation": "bruteforce", "deliver_to": "monitor", "source": "central"') > 0 :
+        if str(m).find('operation": "bruteforce", "deliver_to": "monitor"') > 0 :
             dict['bruteforce'] = 1
     
     if base_is_reached():
@@ -311,5 +313,67 @@ def test_bruteforce():
 #     #tbd validation
 #     pass
 
+def test_name_substitution():
+    time.sleep(5)
+    event = threading.Event()
+    thread = threading.Thread(target=lambda: listener(event))
+    thread.start()
+    sleep(2)
+    order()
+    global messages
+    global dict
+    if dest_point_is_reached():
+        bootstrap_servers = ['localhost:9094']
+        topicName = 'QWERTY'
+        producer = KafkaProducer(bootstrap_servers = bootstrap_servers)
+        producer = KafkaProducer()
 
+        ack = producer.send(topicName, b'Hello World!!!!!!!!')
+        metadata = ack.get()
+        
+        pincode(12345)
+
+    time.sleep(2)
+    for m in messages:
+        if str(m).find('operation": "policy_error"') > 0 :
+            dict['error'] = 1
     
+    if base_is_reached():
+        event.set()
+        thread.join()
+        messages = []
+    assert dict['error'] == 1
+    dict = {}
+    
+def test_image_appearance():
+    time.sleep(5)
+    event = threading.Event()
+    thread = threading.Thread(target=lambda: listener(event))
+    thread.start()
+    sleep(2)
+    order()
+    global messages
+    global dict
+    if dest_point_is_reached():  
+        
+        files = os.listdir("./storage/")  
+        #print(files)  
+        files = [file for file in files if "Picture_" in file]
+        #print(files)
+        file = max(files, key=lambda i: os.stat("./storage/"+i).st_mtime)
+        if (time.time() - os.stat("./storage/"+file).st_mtime) < 30:
+            print("Picture was founded!")
+            os.remove("./storage/"+file)
+        pincode(12345)
+        
+    time.sleep(2)
+    for m in messages:
+        if str(m).find('"operation": "internal_error"') > 0 :
+            dict['error'] = 1
+    
+    if base_is_reached():
+        event.set()
+        thread.join()
+        messages = []
+    assert dict['error'] == 1
+    dict = {}

@@ -10,7 +10,7 @@ from confluent_kafka import Consumer, OFFSET_BEGINNING
 import json
 from producer import proceed_to_deliver
 import base64
-
+UNIC_NAME_POSITION = "position"
 
 _requests_queue: multiprocessing.Queue = None
 x_coord = 0
@@ -26,9 +26,16 @@ def handle_event(id, details_str):
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
     global x_coord
     global y_coord
+    global UNIC_NAME_POSITION
     try:
+        details['source'] = UNIC_NAME_POSITION
         delivery_required = False
-        if details['operation'] == 'count_direction':
+        if details['operation'] == 'set_name':
+            
+            UNIC_NAME_POSITION = details['name']
+            #Name.unic_name_motion = details['name']
+            delivery_required = False
+        elif details['operation'] == 'count_direction':
             details['deliver_to'] = 'central'
             details['operation'] = 'count_direction'
             dx_target = details['x1'] - x_coord
@@ -38,7 +45,7 @@ def handle_event(id, details_str):
             details['speed'] = randrange(9)+1
             print(f"[count_direction] event {id}, {details['distance']} to {details['direction']} with speed {details['speed']}")
             delivery_required = True
-        if details['operation'] == 'location':
+        elif details['operation'] == 'location':
             details['deliver_to'] = 'central'
             details['operation'] = 'location'
             details['x'] = x_coord
@@ -60,7 +67,7 @@ def handle_event(id, details_str):
             "id": id,
             "operation": "nonexistent",
             "deliver_to": "gps",
-            "source": "",
+            "source": UNIC_NAME_POSITION,
             "x": x_coord,
             "y": y_coord
             }

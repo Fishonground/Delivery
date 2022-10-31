@@ -1,49 +1,53 @@
 # implements Kafka topic consumer functionality
 
 from datetime import datetime
+import math
 import multiprocessing
+from random import randrange
 import threading
 import time
 from confluent_kafka import Consumer, OFFSET_BEGINNING
 import json
 from producer import proceed_to_deliver
-import base64
-UNIC_NAME_SENSORS = "sensors"
+import requests
 
 _requests_queue: multiprocessing.Queue = None
-
-def close_lock(id, details, was):
-    while True:
-        now = time.time()
-        if (now-was) >= 5:
-            print(f"[lock_closing] event {id}, {now}")
-            details['deliver_to'] = 'central'
-            details['operation'] = 'lock_closing'
-            proceed_to_deliver(id, details)
-            break
-        else:
-            time.sleep(1)
-
+UNIC_NAME_COMMUNICATION_OUT = "communication_out"            
 
 def handle_event(id, details_str):
     details = json.loads(details_str)
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
-    global UNIC_NAME_SENSORS
+    global UNIC_NAME_COMMUNICATION_OUT
     try:
-        details['source'] = UNIC_NAME_SENSORS
+        details['source'] = UNIC_NAME_COMMUNICATION_OUT
         delivery_required = False
         if details['operation'] == 'set_name':
             
-            UNIC_NAME_SENSORS = details['name']
+            UNIC_NAME_COMMUNICATION_OUT = details['name']
             #Name.unic_name_motion = details['name']
             delivery_required = False
-        elif details['operation'] == 'lock_opening':
-            details['deliver_to'] = 'central'
-            details['operation'] = 'lock_opening'
-            delivery_required = True
-            was = time.time();
-            print(f"[lock_opening] event {id}, {was}")
-            threading.Thread(target=lambda: close_lock(id, details, was)).start()
+        elif details['operation'] == 'confirmation':
+            data = {
+                "status": details['confirmation']
+            }
+            response = requests.post(
+                    "http://fleet:6004/confirmation",
+                    data=json.dumps(data),
+                    headers={"Content-Type": "application/json", "auth": "very-secure-token"},
+            )
+            print(f"[communication] event {id}, server answered {response}")    
+
+        elif details['operation'] == 'operation_status':
+            data = {
+                "status": details['status']
+            }
+            response = requests.post(
+                    "http://fleet:6004/status",
+                    data=json.dumps(data),
+                    headers={"Content-Type": "application/json", "auth": "very-secure-token"},
+            )
+            print(f"[communication] event {id}, server answered {response}")
+            
         else:
             print(f"[warning] unknown operation!\n{details}")                
         if delivery_required:
@@ -55,23 +59,23 @@ def handle_event(id, details_str):
 
 def consumer_job(args, config):
     # Create Consumer instance
-    sensors_consumer = Consumer(config)
+    communication_consumer = Consumer(config)
 
     # Set up a callback to handle the '--reset' flag.
-    def reset_offset(sensors_consumer, partitions):
+    def reset_offset(communication_consumer, partitions):
         if args.reset:
             for p in partitions:
                 p.offset = OFFSET_BEGINNING
-            sensors_consumer.assign(partitions)
+            communication_consumer.assign(partitions)
 
     # Subscribe to topic
-    topic = "sensors"
-    sensors_consumer.subscribe([topic], on_assign=reset_offset)
+    topic = "communication_out"
+    communication_consumer.subscribe([topic], on_assign=reset_offset)
 
     # Poll for new messages from Kafka and print them.
     try:
         while True:
-            msg = sensors_consumer.poll(1.0)
+            msg = communication_consumer.poll(1.0)
             if msg is None:
                 pass
             elif msg.error():
@@ -87,7 +91,7 @@ def consumer_job(args, config):
     except KeyboardInterrupt:
         pass
     finally:
-        sensors_consumer.close()
+        communication_consumer.close()
 
 
 def start_consumer(args, config):

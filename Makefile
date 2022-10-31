@@ -15,7 +15,7 @@ create-topics:
     --partitions 1
 	docker exec broker \
   kafka-topics --create --if-not-exists \
-    --topic communication \
+    --topic communication_in \
     --bootstrap-server localhost:9092 \
     --replication-factor 1 \
     --partitions 1
@@ -55,6 +55,12 @@ create-topics:
     --bootstrap-server localhost:9092 \
     --replication-factor 1 \
     --partitions 1
+	docker exec broker \
+  kafka-topics --create --if-not-exists \
+    --topic communication_out \
+    --bootstrap-server localhost:9092 \
+    --replication-factor 1 \
+    --partitions 1
 
 
 
@@ -69,7 +75,8 @@ broker:
 permissions:
 	chmod u+x $(PATH_PREFIX)/delivery-robot/monitor/monitor.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/central/central.py
-	chmod u+x $(PATH_PREFIX)/delivery-robot/communication/communication.py
+	chmod u+x $(PATH_PREFIX)/delivery-robot/communication_in/communication_in.py
+	chmod u+x $(PATH_PREFIX)/delivery-robot/communication_out/communication_out.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/fleet/server.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/hmi/hmi.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/motion/motion.py
@@ -88,7 +95,7 @@ prepare-screen:
 	sudo /etc/init.d/screen-cleanup start
 
 
-run-screen: broker run-central-screen run-communication-screen run-fleet-screen run-hmi-screen run-motion-screen run-sensors-screen run-position-screen run-gps-screen run-camera-screen
+run-screen: broker run-central-screen run-communication_out-screen run-communication_in-screen run-fleet-screen run-hmi-screen run-motion-screen run-sensors-screen run-position-screen run-gps-screen run-camera-screen
 
 build:
 	docker-compose build
@@ -127,11 +134,17 @@ run-central:
 run-central-screen:
 	screen -dmS central bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run central/central.py config.ini"
 
-run-communication:
-	cd $(PATH_PREFIX)/delivery-robot/; pipenv run communication/communication.py config.ini
+run-communication_in:
+	cd $(PATH_PREFIX)/delivery-robot/; pipenv run communication_in/communication_in.py config.ini
 
-run-communication-screen:
-	screen -dmS central bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run central/central.py config.ini"
+run-communication_in-screen:
+	screen -dmS central bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run communication_in/communication_in.py config.ini"
+
+run-communication_out:
+	cd $(PATH_PREFIX)/delivery-robot/; pipenv run communication_out/communication_out.py config.ini
+
+run-communication_out-screen:
+	screen -dmS central bash -c "cd $(PATH_PREFIX)/delivery-robot/; pipenv run communication_out/communication_out.py config.ini"
 
 run-fleet:
 	cd $(PATH_PREFIX)/delivery-robot/; pipenv run fleet/fleet.py config.ini

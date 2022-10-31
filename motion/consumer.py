@@ -8,13 +8,20 @@ from confluent_kafka import Consumer, OFFSET_BEGINNING
 import json
 from producer import proceed_to_deliver
 import base64
-
+from dataclasses import dataclass
 
 _requests_queue: multiprocessing.Queue = None
 timestamp = time.time()
 speed = 0
 direction = 0
 #stopped = 0
+
+
+
+# @dataclass
+# class Name:
+#     unic_name_motion: str
+UNIC_NAME_MOTION = "motion"
 
 def move_move(id, details, journey_time):
     while True:
@@ -36,9 +43,16 @@ def move_move(id, details, journey_time):
 def handle_event(id, details_str):
     details = json.loads(details_str)
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
+    global UNIC_NAME_MOTION
     try:
+        details['source'] = UNIC_NAME_MOTION
         delivery_required = False
-        if details['operation'] == 'motion_start':
+        if details['operation'] == 'set_name':
+            
+            UNIC_NAME_MOTION = details['name']
+            #Name.unic_name_motion = details['name']
+            delivery_required = False
+        elif details['operation'] == 'motion_start':
             if details['speed'] >= 5: details['speed'] = 5
             journey_time = abs(details['distance'] / details['speed']) 
             global timestamp

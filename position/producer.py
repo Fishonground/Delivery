@@ -9,7 +9,7 @@ _requests_queue: multiprocessing.Queue = None
 
 def proceed_to_deliver(id, details):
     # print(f"[debug] queueing for delivery event id: {id}, payload: {details}")
-    details['source'] = 'position'
+    #details['source'] = 'position'
     _requests_queue.put(details)
 
 
@@ -26,7 +26,7 @@ def producer_job(_, config, requests_queue: multiprocessing.Queue):
     topic = 'monitor'
     while True:
         event_details = requests_queue.get() 
-        event_details['source'] = 'position'
+        #event_details['source'] = 'position'
         print ("Start messaging!")
         print (event_details)               
         producer.produce(topic, json.dumps(event_details), event_details['id'],  

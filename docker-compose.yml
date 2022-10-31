@@ -42,6 +42,8 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.monitor
+    volumes:
+      - ./storage/:/storage
     depends_on:
       - broker
 
@@ -62,15 +64,25 @@ services:
     depends_on:
       - broker
 
-  communication:
-    image: communication
+  communication_in:
+    image: communication_in
     build:
       context: .
-      dockerfile: ./Dockerfile.communication
+      dockerfile: ./Dockerfile.communication_in
     depends_on:
       - broker
     ports:
       - "6008:6008"
+  
+  communication_out:
+    image: communication_out
+    build:
+      context: .
+      dockerfile: ./Dockerfile.communication_out
+    depends_on:
+      - broker
+    ports:
+      - "6009:6009"
     
 
   hmi:
@@ -112,5 +124,7 @@ services:
       build:
         context: .
         dockerfile: ./Dockerfile.camera
+      volumes:
+      - ./storage/:/storage
       depends_on:
         - broker

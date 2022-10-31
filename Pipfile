@@ -9,6 +9,7 @@ configparser = "*"
 flask = "*"
 pytest = "*"
 requests = "*"
+kafka-python = "*"
 
 [dev-packages]
 

@@ -4,11 +4,11 @@ import multiprocessing
 import threading
 from confluent_kafka import Producer
 import json
-
+#from consumer import Name#UNIC_NAME_MOTION
 _requests_queue: multiprocessing.Queue = None
 
 def proceed_to_deliver(id, details):
-    details['source'] = 'motion'
+    #details['source'] = Name.unic_name_motion#UNIC_NAME_MOTION
     _requests_queue.put(details)
 
 
@@ -22,7 +22,7 @@ def producer_job(_, config, requests_queue: multiprocessing.Queue):
     topic = 'monitor'
     while True:
         event_details = requests_queue.get() 
-        event_details['source'] = 'motion'
+        #event_details['source'] = Name.unic_name_motion#UNIC_NAME_MOTION
         print ("Start messaging in motion producer!")
         print (event_details)               
         producer.produce(topic, json.dumps(event_details), event_details['id'],  
