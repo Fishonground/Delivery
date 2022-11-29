@@ -27,14 +27,15 @@ def handle_event(id, details):
     # print(f"[debug] handling event {id}, {details}")
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
     global log_error_flag
-    if not log_error_flag:
-        try:
-            text_file = open("/storage/logs.txt", "a+")
-            t = time.time()
-            text_file.write(f"[{t}] id {id}, {details['source']}->{details['deliver_to']}: {details['operation']}\n")
-        except Exception as e:
-            log_error_flag = True
+    try:
+        text_file = open("/storage/logs.txt", "a+")
+        t = time.time()
+        text_file.write(f"[{t}] id {id}, {details['source']}->{details['deliver_to']}: {details['operation']}\n")
+    except Exception as e:
+        print('[error] log failed')
+        if not log_error_flag:
             go_back(id)
+            log_error_flag = True
     #text_file.write(details + "\n")
 
     if not ((details['source']=='monitor' or details['source']=='central' or details['source']==UNIC_NAME_MONITOR or details['source']==UNIC_NAME_CENTRAL) 
