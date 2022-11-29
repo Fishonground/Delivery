@@ -10,12 +10,31 @@ from policies import check_operation
 from producer import proceed_to_deliver
 from policies import UNIC_NAME_MONITOR, UNIC_NAME_CENTRAL
 
+log_error_flag = False
+
+def go_back(id):
+    m = {
+        'id':id,
+        'deliver_to': 'position',
+        'operation': 'count_direction',
+        'source': 'central',
+        'x1': 0,
+        'y1': 0
+    }
+    proceed_to_deliver(id, m)
+
 def handle_event(id, details):    
     # print(f"[debug] handling event {id}, {details}")
     print(f"[info] handling event {id}, {details['source']}->{details['deliver_to']}: {details['operation']}")
-    text_file = open("/storage/logs.txt", "a+")
-    t = time.time()
-    text_file.write(f"[{t}] id {id}, {details['source']}->{details['deliver_to']}: {details['operation']}\n")
+    global log_error_flag
+    if not log_error_flag:
+        try:
+            text_file = open("/storage/logs.txt", "a+")
+            t = time.time()
+            text_file.write(f"[{t}] id {id}, {details['source']}->{details['deliver_to']}: {details['operation']}\n")
+        except Exception as e:
+            log_error_flag = True
+            go_back(id)
     #text_file.write(details + "\n")
 
     if not ((details['source']=='monitor' or details['source']=='central' or details['source']==UNIC_NAME_MONITOR or details['source']==UNIC_NAME_CENTRAL) 

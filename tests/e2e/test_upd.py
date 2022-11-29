@@ -362,7 +362,7 @@ def test_image_appearance():
         #print(files)
         file = max(files, key=lambda i: os.stat("./storage/"+i).st_mtime)
         if (time.time() - os.stat("./storage/"+file).st_mtime) < 30:
-            print("Picture was founded!")
+            #print("Picture was founded!")
             os.remove("./storage/"+file)
         pincode(12345)
         

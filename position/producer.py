@@ -27,7 +27,7 @@ def producer_job(_, config, requests_queue: multiprocessing.Queue):
     while True:
         event_details = requests_queue.get() 
         #event_details['source'] = 'position'
-        print ("Start messaging!")
+        #print ("Start messaging!")
         print (event_details)               
         producer.produce(topic, json.dumps(event_details), event_details['id'],  
             callback=delivery_callback

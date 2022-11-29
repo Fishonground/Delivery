@@ -24,7 +24,7 @@ def get_confirmation():
 def get_ending():
     try:
         content = request.json
-        print(f"[info] order delivered {content['status']}, rotot has been planted")
+        print(f"[info] order delivered {content['status']}, robot has been planted")
     except:
         return "error", 400
     return jsonify({"operation": "delivering confirmed", "status": content['status']})

@@ -389,7 +389,7 @@ def check_operation(id, details):
                 files = [file for file in files if "Picture_" in file]
                 #print (files)
                 file = max(files, key=lambda i: os.stat("/storage/"+i).st_mtime)
-                print(file)
+                #print(file)
                 if (time.time() - os.stat("/storage/"+file).st_mtime) < 30:
                     print("Picture was founded!")
                     pincoding_request = True

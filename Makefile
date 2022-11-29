@@ -84,6 +84,7 @@ permissions:
 	chmod u+x $(PATH_PREFIX)/delivery-robot/sensors/sensors.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/camera/camera.py
 	chmod u+x $(PATH_PREFIX)/delivery-robot/gps/gps.py
+	chmod 777 $(PATH_PREFIX)/delivery-robot/storage
 
 pipenv:
 	pipenv install -r requirements.txt

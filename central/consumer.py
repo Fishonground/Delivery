@@ -120,7 +120,7 @@ def handle_event(id, details_str):
         elif details['operation'] == 'count_direction':
             details['deliver_to'] = 'motion'
             details['operation'] = 'motion_start'
-            print(f"[central] event {id}, motion start command is sending...")
+            #print(f"[central] event {id}, motion start command is sending...")
             delivery_required = True
 
         elif details['operation'] == 'pincoding':
@@ -218,7 +218,7 @@ def handle_event(id, details_str):
                     print(f"[central] event {id}, next step is counting...")
                     delivery_required = True
                 else:
-                    print(f"[error] event {id}, robot is in not correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
+                    print(f"[error] event {id}, robot is in not in correct position! Expected {x1} : {y1} but received {details['x']} : {details['y']}")
             else:
                 #details['x'] = x
                 #details['y'] = y
